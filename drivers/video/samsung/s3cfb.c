@@ -38,15 +38,19 @@
 #include <linux/earlysuspend.h>
 #include <linux/suspend.h>
 #endif
+
 #ifdef CONFIG_MACH_P1
 #include <linux/mfd/max8998.h>
 #include <linux/sec_battery.h>
 #include <mach/gpio.h>
 #include <mach/gpio-p1.h>
 #include "logo_rgb24_wvga_portrait_p1.h"
-#else //CONFIG_MACH_ARIES
+#endif
+
+#if defined(CONFIG_MACH_ARIES) || defined(CONFIG_MACH_WAVE)
 #include "logo_rgb24_wvga_portrait.h"
 #endif
+
 #include <mach/regs-clock.h>
 #include "s3cfb.h"
 
