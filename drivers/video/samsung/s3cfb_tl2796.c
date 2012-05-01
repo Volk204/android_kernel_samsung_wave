@@ -787,6 +787,9 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	lcd->bl_dev->props.max_brightness = 255;
 	lcd->bl_dev->props.brightness = lcd->bl;
 
+#ifdef CONFIG_MACH_WAVE
+	tl2796_ldi_disable(lcd);
+#endif
 	tl2796_ldi_enable(lcd);
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	lcd->early_suspend.suspend = tl2796_early_suspend;
