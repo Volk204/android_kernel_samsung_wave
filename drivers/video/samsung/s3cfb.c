@@ -47,12 +47,20 @@
 #include "logo_rgb24_wvga_portrait_p1.h"
 #endif
 
-#if defined(CONFIG_MACH_ARIES) || defined(CONFIG_MACH_WAVE)
+#if defined(CONFIG_MACH_ARIES)
 #include "logo_rgb24_wvga_portrait.h"
 #endif
 
 #include <mach/regs-clock.h>
 #include "s3cfb.h"
+
+#if defined(CONFIG_WAVE_S8500)
+#include "s8500-logo.h"
+#endif
+
+#if defined(CONFIG_WAVE_S8530)
+#include "s8530-logo.h"
+#endif
 
 #ifdef CONFIG_FB_S3C_MDNIE
 #include "s3cfb_mdnie.h"
