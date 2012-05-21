@@ -120,8 +120,14 @@ static void s5pv210_pm_prepare(void)
 {
 	unsigned int tmp;
 
+#ifdef CONFIG_MACH_WAVE
+	S3C_PMDBG("Preparing sleep. Saving INFORM2...\n");
+	/* Bada bootloaders does use INFORM2 instead of INFORM0 as wakeup handler */
+	__raw_writel(virt_to_phys(s3c_cpu_resume), S5P_INFORM2);
+#else
 	/* ensure at least INFORM0 has the resume address */
 	__raw_writel(virt_to_phys(s3c_cpu_resume), S5P_INFORM0);
+#endif
 
 	/* WFI for SLEEP mode configuration by SYSCON */
 	tmp = __raw_readl(S5P_PWR_CFG);
