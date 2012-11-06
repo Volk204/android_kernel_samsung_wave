@@ -1250,7 +1250,8 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	register_early_suspend(&fbdev->early_suspend);
 #endif
 
-#ifdef CONFIG_MACH_WAVE
+#ifdef CONFIG_WAVE_S8500
+/* FIXME: ugly hack around for configuring AMOLED */
 	s3cfb_early_suspend(&fbdev->early_suspend);
 	msleep(200);
 	s3cfb_late_resume(&fbdev->early_suspend);
