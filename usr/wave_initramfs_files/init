@@ -2,6 +2,8 @@
 export _PATH="$PATH"
 export PATH=/stage1
 
+$force_recovery = 0
+
 busybox cd /
 busybox date >>boot.txt
 exec >>boot.txt 2>&1
@@ -11,14 +13,40 @@ busybox mount -t sysfs sysfs /sys
 
 busybox mkdir /bada_usr
 busybox chmod 0777 /bada_usr
-busybox mount -t vfat /dev/block/platform/s3c-sdhci.0/by-num/p2 /bada_usr noatime
+busybox mount -t vfat -o noatime /dev/block/platform/s3c-sdhci.0/by-num/p2 /bada_usr
 
-busybox mount -t ext4 /bada_usr/system.img /system loop
-busybox mount -t ext4 /bada_usr/cache.img /cache loop
+if busybox mount | busybox grep /bada_usr > /dev/null ; then
+	#check partitions existance
+	if [ ! -e /bada_usr/cache.img ] ; then		
+		#40MB cache partition
+		busybox make_ext4fs -l 41943040 /bada_usr/cache.img
+	fi
+	if [ ! -e /bada_usr/data.img ] ; then		
+		#85MB data partition		
+		busybox make_ext4fs -l 89128960 /bada_usr/data.img
+	fi
+	if	[ ! -e /bada_usr/system.img ] ; then			
+		#240MB system partition	
+		busybox make_ext4fs -l 252143616 /bada_usr/system.img		
+		$force_recovery = 1
+	fi
+	
+fi
+
+if busybox mount | busybox grep /bada_usr && [ ! -e /bada_usr/system.img ] ; then	
+	
+	#240MB system partition	
+	busybox mkfs_ext4 -l 252143616 /bada_usr/system.img
+	
+	$force_recovery = 1
+fi
+
+busybox mount -t ext4 -o loop /bada_usr/system.img /system
+busybox mount -t ext4 -o loop /bada_usr/cache.img /cache
 
 image=/stage1/ramdisk.img
 
-if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
+if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline || [ $force_recovery == 1 ]; then
 	# recovery boot
 	busybox rm -fr /cache/.startrecovery
 	image=/stage1/ramdisk-recovery.img
@@ -31,6 +59,7 @@ elif ! busybox test -e /system/build.prop && 0 ; then
 
 	busybox losetup /dev/block/loop5 /bada_usr/cache.img
 	erase_image /dev/block/loop5
+	busybox losetup -d /dev/block/loop5
 
 	busybox mount -t ext4 /bada_usr/cache.img /cache loop
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  *
- * Copyright (c) 2012 Dominik Marszk
+ * Copyright (c) 2012 Dominik Marszk <dmarszk@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -1021,13 +1021,6 @@ static int panel_reset_lcd(struct platform_device *pdev)
 	return 0;
 }
 
-static int panel_backlight_on(struct platform_device *pdev)
-{
-	printk("%s (empty stub)\n", __FUNCTION__);
-	return 0;
-}
-
-
 #define LCD_BUS_NUM     3
 
 #ifdef CONFIG_FB_S3C_LG4573
@@ -1055,7 +1048,6 @@ static struct s3c_platform_fb lg4573_data __initdata = {
 
 	.lcd = &lg4573,
 	.cfg_gpio	= panel_cfg_gpio,
-	.backlight_on	= panel_backlight_on,
 	.reset_lcd	= panel_reset_lcd,
 };
 
@@ -1086,7 +1078,6 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 
 	.lcd = &s6e63m0,
 	.cfg_gpio	= panel_cfg_gpio,
-	.backlight_on	= panel_backlight_on,
 	.reset_lcd	= panel_reset_lcd,
 };
 
@@ -1746,6 +1737,7 @@ static int ce147_power_en(int onoff)
 /*	int bd_level; // unused variable */
 	int err = 0;
 
+
 	if (onoff != ce147_powered_on) {
 		if (onoff)
 			err = ce147_power_on();
@@ -1923,6 +1915,7 @@ static int s5ka3dfx_power_off(void)
 
 	gpio_set_value(GPIO_CAM_ANALOG_EN, 0);
 
+
 	gpio_free(GPIO_CAM_ANALOG_EN);
 	gpio_free(GPIO_CAM_VGA_nRST);
 	gpio_free(GPIO_CAM_VGA_nSTBY);
@@ -2056,6 +2049,22 @@ static u8 t7_config[] = {GEN_POWERCONFIG_T7,
 64, 255, 50};
 static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8,
 7, 0, 5, 0, 0, 0, 9, 35};
+#if defined (CONFIG_WAVE_S8530)
+static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
+139,
+0, 0, //xorigin, yorigin
+19,11, //xsize, ysize
+0, 33, 30, 2, 7, 0, 3, 1,
+46, MXT224_MAX_MT_FINGERS,
+5, 40,
+10, //amphyst
+0, 0, //xrange, yrange
+0, 0, 0, 0, 0, 0,
+143, 40, //xedgectrl, dist
+143, 80, //yedgectrl, dist
+18//jumplimit
+};
+#else
 static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
 139,
 0, 0, //xorigin, yorigin
@@ -2070,6 +2079,7 @@ static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
 143, 80, //yedgectrl, dist
 18//jumplimit
 };
+#endif
 static u8 t18_config[] = {SPT_COMCONFIG_T18,
 0, 1};
 static u8 t20_config[] = {PROCI_GRIPFACESUPPRESSION_T20,
@@ -5045,6 +5055,7 @@ static void __init wave_machine_init(void)
 
 	/* fm radio */
 	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
+
 
 	/* optical sensor */
 	gp2a_gpio_init();
