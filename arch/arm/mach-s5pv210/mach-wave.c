@@ -2378,8 +2378,8 @@ static void __init android_pmem_set_platdata(void)
 }
 #endif
 
-struct platform_device sec_device_battery = {
-	.name	= "sec-battery",
+struct platform_device wave_charger_device = {
+	.name	= "wave_charger",
 	.id	= -1,
 };
 
@@ -4716,8 +4716,8 @@ static struct platform_device *wave_devices[] __initdata = {
 #ifdef CONFIG_VIDEO_TV20
         &s5p_device_tvout,
 #endif
-	&sec_device_battery,
-	//&s3c_device_i2c10,
+	&wave_charger_device,
+
 
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 	&s5pv210_pd_audio,
