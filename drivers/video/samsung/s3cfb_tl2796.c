@@ -333,7 +333,11 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_WAVE
+static const struct backlight_ops s5p_bl_ops = {
+#else
 const struct backlight_ops s5p_bl_ops = {
+#endif
 	.update_status = s5p_bl_update_status,
 };
 
@@ -502,7 +506,11 @@ static u64 tl2796_voltage_lookup(struct s5p_lcd *lcd, int c, u32 v)
 {
 	int i;
 	u32 vh = ~0, vl = ~0;
+#ifdef CONFIG_MACH_WAVE
+	u32 bl = 0, bh = 0;
+#else
 	u32 bl, bh = 0;
+#endif
 	u64 ret;
 #ifdef CONFIG_MACH_WAVE
 	struct s5p_tl2796_panel_data *pdata = lcd->data;

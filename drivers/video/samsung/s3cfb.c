@@ -54,11 +54,8 @@
 #include <mach/regs-clock.h>
 #include "s3cfb.h"
 
-#if defined(CONFIG_WAVE_S8500)
+#if defined(CONFIG_WAVE_WAVE)
 #include "s8500-logo.h"
-#endif
-
-#if defined(CONFIG_WAVE_S8530)
 #include "s8530-logo.h"
 #endif
 
@@ -194,10 +191,18 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 		}
 	}
 #endif
+
+#if defined(CONFIG_MACH_WAVE)
+	if(machine_is_wave2())
+		memcpy(fb->screen_base, S8530_LOGO_RGB24, fb->var.yres * fb->fix.line_length);
+	else
+		memcpy(fb->screen_base, S8500_LOGO_RGB24, fb->var.yres * fb->fix.line_length);
+#else
 	if (readl(S5P_INFORM5)) //LPM_CHARGING mode
 		memcpy(fb->screen_base, charging, fb->var.yres * fb->fix.line_length);
 	else
 		memcpy(fb->screen_base, LOGO_RGB24, fb->var.yres * fb->fix.line_length);
+#endif
 	return 0;
 }
 #endif
@@ -1259,12 +1264,12 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	register_early_suspend(&fbdev->early_suspend);
 #endif
 
-#ifdef CONFIG_WAVE_S8500
-/* FIXME: ugly hack around for configuring AMOLED */
+	if(machine_is_wave()) {
+	/* FIXME: ugly hack around for configuring AMOLED */
 	s3cfb_early_suspend(&fbdev->early_suspend);
 	msleep(200);
 	s3cfb_late_resume(&fbdev->early_suspend);
-#endif
+	}
 
 	ret = device_create_file(&(pdev->dev), &dev_attr_win_power);
 	if (ret < 0)
