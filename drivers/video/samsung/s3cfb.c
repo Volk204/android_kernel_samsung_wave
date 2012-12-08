@@ -151,7 +151,7 @@ MODULE_PARM_DESC(bootloaderfb, "Address of booting logo image in Bootloader");
 
 #ifndef CONFIG_FRAMEBUFFER_CONSOLE
 
-static int s3cfb_draw_logo(struct fb_info *fb)
+static int __init s3cfb_draw_logo(struct fb_info *fb)
 {
 #ifdef CONFIG_FB_S3C_SPLASH_SCREEN
 	struct fb_fix_screeninfo *fix = &fb->fix;
@@ -945,7 +945,7 @@ err_alloc:
 	return ret;
 }
 
-static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
+static int __init s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(ctrl->dev);
 	int ret, i, j;
@@ -1106,7 +1106,7 @@ static void progress_timer_handler(unsigned long data)
 }
 #endif
 
-static int __devinit s3cfb_probe(struct platform_device *pdev)
+static int __init s3cfb_probe(struct platform_device *pdev)
 {
 	struct s3c_platform_fb *pdata;
 	struct s3cfb_global *fbdev;
