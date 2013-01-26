@@ -335,6 +335,13 @@ module_param(dhd_arp_mode, uint, 0);
 uint dhd_arp_enable = TRUE;
 module_param(dhd_arp_enable, uint, 0);
 
+/* Controls WiFi Power Mode when sleeping
+   sys/module/bcmdhd/parameters/wifi_speed      */
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+uint wifi_speed = 0;
+module_param(wifi_speed, uint, 0664);
+#endif
+
 /* Global Pkt filter enable control */
 uint dhd_pkt_filter_enable = TRUE;
 module_param(dhd_pkt_filter_enable, uint, 0);
@@ -533,6 +540,11 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 	char iovbuf[32];
 	int bcn_li_dtim = 3;
 	uint roamvar = 1;
+
+
+        /* Don't allow low power if wifi_speed is set to 1 */
+        if (wifi_speed == 1)
+            power_mode = PM_FAST;
 
 	DHD_TRACE(("%s: enter, value = %d in_suspend=%d\n",
 		__FUNCTION__, value, dhd->in_suspend));
