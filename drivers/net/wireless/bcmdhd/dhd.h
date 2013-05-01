@@ -248,9 +248,8 @@ typedef struct dhd_cmn {
 	#define DHD_PM_RESUME_WAIT_INIT(a) DECLARE_WAIT_QUEUE_HEAD(a);
 	#define _DHD_PM_RESUME_WAIT(a, b) do {\
 			int retry = 0; \
-			SMP_RD_BARRIER_DEPENDS(); \
+			smp_mb(); \
 			while (dhd_mmc_suspend && retry++ != b) { \
-				SMP_RD_BARRIER_DEPENDS(); \
 				wait_event_interruptible_timeout(a, !dhd_mmc_suspend, 1); \
 			} \
 		} while (0)
