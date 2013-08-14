@@ -81,7 +81,7 @@ busybox mount -t ext4 /dev/loop1 /cache
 
 image=/stage1/ramdisk.img
 
-if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline || [ "$force_recovery" -eq "1" ] ; then
+if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=0 /proc/cmdline || busybox grep -q bootmode=2 /proc/cmdline || [ "$force_recovery" -eq "1" ] ; then
 	# recovery boot
 	busybox rm -fr /cache/.startrecovery
 	image=/stage1/ramdisk-recovery.img
