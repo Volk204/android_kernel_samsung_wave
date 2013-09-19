@@ -147,10 +147,16 @@ static int wave_notifier_call(struct notifier_block *this,
 
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
-			mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
-		else
-			mode = REBOOT_MODE_NONE;
+				mode = 2;
+		else {
+			if (!strcmp((char *)_cmd, "bigmem"))
+				mode = 4;
+			else
+			if (!strcmp((char *)_cmd, ""))
+				mode = 0;
+		}
 	}
+
 	__raw_writel(mode, S5P_INFORM6);
 
 	return NOTIFY_DONE;
@@ -305,7 +311,7 @@ static struct s3cfb_lcd s6e63m0 = {
 	},
 };
 #endif
-
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM (0 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (11264 * SZ_1K)
 //#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (5000 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (11264 * SZ_1K)
@@ -887,6 +893,8 @@ static struct max8998_charger_data wave_charger = {
 	.adc_array_size		= ARRAY_SIZE(temper_table),
 };
 
+struct max8998_power_callbacks *power_callbacks;
+
 static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(wave_regulators),
 	.regulators     = wave_regulators,
@@ -903,6 +911,7 @@ static struct max8998_platform_data max8998_pdata = {
 	.buck2_set3	= GPIO_BUCK_2_EN,
 	.buck1_default_idx = 1,
 	.buck2_default_idx = 0,
+	.power_callbacks = &power_callbacks,
 };
 
 struct platform_device sec_device_dpram = {
@@ -1259,7 +1268,7 @@ static void set_shared_mic_bias(void)
 {
 	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
     gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
-	gpio_direction_output(GPIO_PCM_SEL, wm8994_mic_bias || jack_mic_bias);
+	gpio_set_value(GPIO_PCM_SEL, wm8994_mic_bias || jack_mic_bias);
 }
 
 static void wm8994_set_mic_bias(bool on)
@@ -2568,7 +2577,7 @@ static struct gpio_init_data wave_init_gpios[] = {
 
 	// GPC0 ----------------------------
 	{
-		.num	= S5PV210_GPC0(0), // GPIO_REC_PCM_CLK
+		.num	= S5PV210_GPC0(0), //NC
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
@@ -2580,21 +2589,21 @@ static struct gpio_init_data wave_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_GPC0(2), // GPIO_REC_PCM_SYNC
+		.num	= S5PV210_GPC0(2), //NC
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_GPC0(3), // GPIO_REC_PCM_IN
+		.num	= S5PV210_GPC0(3), // NC
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_GPC0(4), // GPIO_REC_PCM_OUT
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
+		.num	= S5PV210_GPC0(4), // NC
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
@@ -3419,19 +3428,11 @@ static struct gpio_init_data wave_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, {
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS)
 		.num	= S5PV210_GPJ2(6), // GPIO_EARPATH_SEL
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
+		.val	= S3C_GPIO_SETPIN_ONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-#else
-		.num	= S5PV210_GPJ2(6), // GPIO_EARPATH_SEL
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
-		.drv	= S3C_GPIO_DRVSTR_1X,
-#endif
 	}, {
 		.num	= S5PV210_GPJ2(7), // GPIO_MASSMEMORY_EN
 		.cfg	= S3C_GPIO_OUTPUT,
@@ -3598,9 +3599,9 @@ static struct gpio_init_data wave_init_gpios[] = {
 	}, {
 		.num	= S5PV210_MP03(7), // GPIO_PCM_SEL
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
+		.val	= S3C_GPIO_SETPIN_ONE,
 		.pud	= S3C_GPIO_PULL_NONE,
-		.drv	= S3C_GPIO_DRVSTR_2X,
+		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
 	// MP04 ----------------------------
@@ -3704,6 +3705,7 @@ void s3c_config_gpio_table(void)
 	}
 }
 
+
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
 static void wave_power_off(void)
 {
@@ -3720,6 +3722,9 @@ static void wave_power_off(void)
 
 		/* wait for power button release */
 		if (gpio_get_value(GPIO_nPOWER)) {
+			if(power_callbacks && power_callbacks->power_off)
+				power_callbacks->power_off(power_callbacks);
+				
 			pr_info("%s: set PS_HOLD low\n", __func__);
 
 			/* PS_HOLD high  PS_HOLD_CONTROL, R/W, 0xE010_E81C */
@@ -4670,6 +4675,22 @@ static struct platform_device *wave_devices[] __initdata = {
 	&samsung_asoc_dma,
 };
 
+static void check_bigmem(void) {
+	int bootmode = __raw_readl(S5P_INFORM6);
+	if (bootmode == 4) {
+		wave_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+		wave_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+		wave_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM; 
+		wave_media_devs[1].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+	}
+	else {
+		wave_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
+		wave_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2;
+		wave_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0; 
+		wave_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1;
+	}
+}
+
 static void __init wave_map_io(void)
 {
 	s5p_init_io(NULL, 0, S5P_VA_CHIPID);
@@ -4679,6 +4700,7 @@ static void __init wave_map_io(void)
 	#ifndef CONFIG_S5P_HIGH_RES_TIMERS
 		s5p_set_timer_source(S5P_PWM3, S5P_PWM4);
 	#endif
+	check_bigmem();
 	s5p_reserve_bootmem(wave_media_devs,
 		ARRAY_SIZE(wave_media_devs), S5P_RANGE_MFC);
 #ifdef CONFIG_MTD_ONENAND
@@ -4797,6 +4819,8 @@ static void __init sound_init(void)
         gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
     }
 #else
+	gpio_request(GPIO_EARPATH_SEL, "earpath_sel");
+	gpio_request(GPIO_PCM_SEL, "pcm_sel");
 	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 #endif
 }
@@ -4894,10 +4918,14 @@ static void __init onenand_init(void)
 	clk_enable(clk);
 }
 
+extern void setup_tzpc();
+
 static void __init wave_machine_init(void)
 {
 	arm_pm_restart = wave_pm_restart;
 
+	setup_tzpc();
+	
 	setup_ram_console_mem();
 	wave_inject_cmdline();
 	platform_add_devices(wave_devices, ARRAY_SIZE(wave_devices));
