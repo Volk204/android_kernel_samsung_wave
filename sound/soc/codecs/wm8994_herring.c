@@ -1592,7 +1592,9 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 	u16 val;
 
 	DEBUG_LOG("Recording through Headset Mic\n");
-
+	
+        audio_ctrl_mic_bias_gpio(wm8994->pdata, 0);
+        
 	wm8994_earsel_control(wm8994->pdata, 1);
 
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
