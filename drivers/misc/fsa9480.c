@@ -32,6 +32,9 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#ifdef CONFIG_MACH_WAVE
+#include <linux/regulator/consumer.h>
+#endif
 
 /* FSA9480 I2C registers */
 #define FSA9480_REG_DEVID		0x01
@@ -113,6 +116,9 @@ struct fsa9480_usbsw {
 	int				dev1;
 	int				dev2;
 	int				mansw;
+#ifdef CONFIG_MACH_WAVE
+	struct regulator *usb_vbus_cp_regulator;
+#endif
 };
 
 #ifdef CONFIG_MACH_P1
@@ -221,6 +227,19 @@ static ssize_t fsa9480_set_manualsw(struct device *dev,
 	ret = i2c_smbus_write_byte_data(client, FSA9480_REG_CTRL, value);
 	if (ret < 0)
 		dev_err(&client->dev, "%s: err %d\n", __func__, ret);
+
+#ifdef CONFIG_MACH_WAVE
+	if(path == SW_VAUDIO)
+	{
+		printk("Enabling USB_VBUS_CP\n");
+		regulator_enable(usbsw->usb_vbus_cp_regulator);
+	}
+	else
+	{
+		printk("Disabling USB_VBUS_CP\n");
+		regulator_disable(usbsw->usb_vbus_cp_regulator);
+	}
+#endif
 
 	return count;
 }
@@ -721,6 +740,15 @@ static int __devinit fsa9480_probe(struct i2c_client *client,
 	if (usbsw->pdata->reset_cb)
 		usbsw->pdata->reset_cb();
 
+#ifdef CONFIG_MACH_WAVE
+	if (IS_ERR_OR_NULL(usbsw->usb_vbus_cp_regulator)) {
+		usbsw->usb_vbus_cp_regulator = regulator_get(NULL, "usb_vbus_cp");
+		if (IS_ERR_OR_NULL(usbsw->usb_vbus_cp_regulator)) {
+			pr_err("failed to get usb_vbus_cp regulator");
+			goto fail2;
+		}
+	}
+#endif
 	/* device detection */
 	fsa9480_detect_dev(usbsw);
 
