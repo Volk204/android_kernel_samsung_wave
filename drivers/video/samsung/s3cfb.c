@@ -54,7 +54,8 @@
 #include <mach/regs-clock.h>
 #include "s3cfb.h"
 
-#if defined(CONFIG_WAVE_WAVE)
+#if defined(CONFIG_MACH_WAVE)
+#include <asm/mach-types.h>
 #include "s8500-logo.h"
 #include "s8530-logo.h"
 #endif
