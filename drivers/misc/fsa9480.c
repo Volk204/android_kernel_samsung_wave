@@ -385,7 +385,7 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 
 	val1 = device_type & 0xff;
 	val2 = device_type >> 8;
-#if defined(CONFIG_MACH_ARIES) ||defined (CONFIG_MACH_WAVE)
+#if defined(CONFIG_MACH_ARIES) || defined (CONFIG_MACH_WAVE)
 	dev_info(&client->dev, "dev1: 0x%x, dev2: 0x%x\n", val1, val2);
 #else // CONFIG_MACH_P1
 	dev_info(&client->dev, "prev_dev1: 0x%x, prev_dev2: 0x%x\n", usbsw->dev1, usbsw->dev2);
@@ -395,7 +395,7 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 	/* Attached */
 	if (val1 || val2) {
 		/* USB */
-#if defined(CONFIG_MACH_ARIES) ||defined (CONFIG_MACH_WAVE)
+#if defined(CONFIG_MACH_ARIES) || defined (CONFIG_MACH_WAVE)
 		if (val1 & DEV_T1_USB_MASK || val2 & DEV_T2_USB_MASK) {
 			if (pdata->usb_cb)
 				pdata->usb_cb(FSA9480_ATTACHED);
@@ -420,7 +420,7 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 		} else if (val1 & DEV_T1_UART_MASK || val2 & DEV_T2_UART_MASK) {
 			if (pdata->uart_cb)
 				pdata->uart_cb(FSA9480_ATTACHED);
-#if defined(CONFIG_MACH_ARIES) ||defined (CONFIG_MACH_WAVE)
+#if defined(CONFIG_MACH_ARIES) || defined (CONFIG_MACH_WAVE)
 			if (usbsw->mansw) {
 				ret = i2c_smbus_write_byte_data(client,
 					FSA9480_REG_MANSW1, SW_UART);
