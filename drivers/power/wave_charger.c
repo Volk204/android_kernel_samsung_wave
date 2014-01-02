@@ -64,11 +64,7 @@
 
 enum {
     CHARGING_MODE_BOOTING,
-	CHARGING_STATUS,
-    BATT_TEMP_CHECK,
     BATT_FULL_CHECK,
-	BATT_PERCENTAGE,
-	BATT_TEMP,
 };
 
 #define TOTAL_CHARGING_TIME	(6*60*60)	/* 6 hours */
@@ -107,6 +103,7 @@ struct battery_info {
 	u32 batt_health;	/* Battery Health (Authority) */
 	u32 dis_reason;
 	u32 batt_percentage;
+	u32 batt_voltage_now;
 	u32 charging_status;
 	bool batt_is_full;      /* 0 : Not full 1: Full */
 };
@@ -153,6 +150,7 @@ static enum power_supply_property max8998_battery_props[] = {
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 };
 
@@ -260,13 +258,10 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 		val->intval = 1;
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
-		/*if (chg->pdata && chg->pdata->psy_fuelgauge &&
-			 chg->pdata->psy_fuelgauge->get_property &&
-			 chg->pdata->psy_fuelgauge->get_property(
-				chg->pdata->psy_fuelgauge, psp, val) < 0)
-			return -EINVAL;*/
 		val->intval = chg->bat_info.batt_percentage;
-
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = chg->bat_info.batt_voltage_now;
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
@@ -301,6 +296,9 @@ static int s3c_bat_set_property(struct power_supply *bat_ps,
 	case POWER_SUPPLY_PROP_CAPACITY:
 		chg->bat_info.batt_percentage = val->intval;
 		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		chg->bat_info.batt_voltage_now = val->intval;
+		break;
 	default:
 		mutex_unlock(&chg->mutex);
 		return -EINVAL;
@@ -320,6 +318,7 @@ static int s3c_bat_property_is_writeable(struct power_supply *bat_ps,
 	case POWER_SUPPLY_PROP_PRESENT:
 	case POWER_SUPPLY_PROP_TEMP:
 	case POWER_SUPPLY_PROP_CAPACITY:
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		return true;
 		break;
 	default:
@@ -757,8 +756,9 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->present = 1;
 	chg->bat_info.batt_health = POWER_SUPPLY_HEALTH_GOOD;
 	chg->bat_info.batt_is_full = false;
-	chg->bat_info.batt_temp = 100; //fake
-	chg->bat_info.batt_percentage = 50; //fake, modem will bootup soon and update it... hopefully
+	chg->bat_info.batt_temp = 100;
+	chg->bat_info.batt_percentage = 50;
+	chg->bat_info.batt_voltage_now = 4000000;
 	chg->set_charge_timeout = false;
 
 	chg->cable_status = CABLE_TYPE_NONE;
