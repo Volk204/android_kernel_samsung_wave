@@ -147,9 +147,14 @@ static int wave_notifier_call(struct notifier_block *this,
 
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
-			mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
-		else
-			mode = REBOOT_MODE_NONE;
+				mode = 2;
+		else {
+			if (!strcmp((char *)_cmd, "bigmem"))
+				mode = 4;
+			else
+			if (!strcmp((char *)_cmd, ""))
+				mode = 0;
+		}
 	}
 	__raw_writel(mode, S5P_INFORM6);
 
@@ -305,6 +310,8 @@ static struct s3cfb_lcd s6e63m0 = {
 	},
 };
 #endif
+
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM (0 * SZ_1K)
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (11264 * SZ_1K)
 //#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (5000 * SZ_1K)
@@ -4669,6 +4676,22 @@ static struct platform_device *wave_devices[] __initdata = {
 	&samsung_asoc_dma,
 };
 
+static void check_bigmem(void) {
+	int bootmode = __raw_readl(S5P_INFORM6);
+	if (bootmode == 4) {
+		wave_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+		wave_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+		wave_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM; 
+		wave_media_devs[1].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_BM;
+	}
+	else {
+		wave_media_devs[2].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0;
+		wave_media_devs[4].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2;
+		wave_media_devs[0].memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0; 
+		wave_media_devs[1].memsize =  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1;
+	}
+}
+
 static void __init wave_map_io(void)
 {
 	s5p_init_io(NULL, 0, S5P_VA_CHIPID);
@@ -4678,6 +4701,7 @@ static void __init wave_map_io(void)
 	#ifndef CONFIG_S5P_HIGH_RES_TIMERS
 		s5p_set_timer_source(S5P_PWM3, S5P_PWM4);
 	#endif
+	check_bigmem();
 	s5p_reserve_bootmem(wave_media_devs,
 		ARRAY_SIZE(wave_media_devs), S5P_RANGE_MFC);
 #ifdef CONFIG_MTD_ONENAND
